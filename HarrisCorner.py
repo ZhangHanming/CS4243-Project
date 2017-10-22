@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-def findCorners(frame):
+def findCorners(frame, ksize = 13):
     x, y = frame.shape
 
     gx = np.zeros((x, y))
@@ -13,7 +13,7 @@ def findCorners(frame):
     Ixy = gx * gy
     Iyy = gy * gy
 
-    kernel = np.ones((13,13))
+    kernel = np.ones((ksize,ksize))
     Wxx = cv2.filter2D(Ixx, -1, kernel)
     Wxy = cv2.filter2D(Ixy, -1, kernel)
     Wyy = cv2.filter2D(Iyy, -1, kernel)
@@ -26,17 +26,17 @@ def findCorners(frame):
             D, V = np.linalg.eig(Wi)
             eigMin[i][j] = D.min()
     
-    return selectCorners(eigMin)
+    return selectCorners(eigMin, ksize)
 
 
-def selectCorners(eigMin):
+def selectCorners(eigMin, ksize):
     c = []
     r = []
     rows = []
     cols = []
-    for i in range(0,eigMin.shape[0]-13,13):
-        for j in range(0,eigMin.shape[1]-13,13):
-            m = eigMin[i:i+12, j:j+12]
+    for i in range(0,eigMin.shape[0]-ksize,13):
+        for j in range(0,eigMin.shape[1]-ksize,13):
+            m = eigMin[i:i+ksize-1, j:j+ksize-1]
             row = np.argmax(np.max(m, axis=0))+i
             col = np.argmax(np.max(m, axis=1))+j
             r.append(row)
