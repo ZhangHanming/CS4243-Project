@@ -19,7 +19,7 @@ def createPyramid(frame, minSize = 32, maxLevel = 5):
 
     return pyramid
 
-# downsample by averaging a neighborhood of 4 pixels
+# downsample by averabng a neighborhood of 4 pixels
 def downsample(frame):
     new_frame = np.zeros(map(lambda x: x/2, frame.shape))
     for i in range(0,frame.shape[0],2):
@@ -67,10 +67,10 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 3):
                 continue
 
             try:
-                Wi = np.array([[Wxx[r[j]][c[j]], Wxy[r[j]][c[j]]], [Wxy[r[j]][c[j]], Wyy[r[j]][c[j]]]])
-                gi = np.array([[Gx[r[j]][c[j]]], [Gy[r[j]][c[j]]]])
+                Z = np.array([[Wxx[r[j]][c[j]], Wxy[r[j]][c[j]]], [Wxy[r[j]][c[j]], Wyy[r[j]][c[j]]]])
+                b = np.array([[Gx[r[j]][c[j]]], [Gy[r[j]][c[j]]]])
 
-                d = np.dot(np.linalg.inv(Wi), gi)
+                d = np.dot(np.linalg.inv(Z), b)
 
                 r[j] += d[0,0]
                 c[j] += d[1,0]
