@@ -60,6 +60,7 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 3):
 
         j = 0
         while(j < len(r)):
+            # discard out of frame corners
             if(r[j] > x or c[j] > y):
                 del r[j]
                 del c[j]
