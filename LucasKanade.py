@@ -2,7 +2,15 @@ import numpy as np
 import cv2
 
 def trackFeatures(old_frame, new_frame, r, c):
-    return None
+    old_frame_pyramid = createPyramid(old_frame)
+    new_frame_pyramid = createPyramid(new_frame)
+
+    # loop over each corner
+    for i in range(len(r)):
+        r[i], c[i] = computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r[i], c[i])
+
+    return r, c
+
 
 def createPyramid(frame, minSize = 32):
     pyramid = [frame]
@@ -22,5 +30,9 @@ def downsample(frame):
             new_frame[i/2][j/2] = frame[i:i+2,j:j+2].sum() / 4
 
     return new_frame
+
+def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c):
+    #TODO
+    return
 
 
