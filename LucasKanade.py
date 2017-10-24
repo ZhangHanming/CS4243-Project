@@ -75,12 +75,13 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 3):
 
                 r[j] += d[0,0]
                 c[j] += d[1,0]
+
+                if(i != len(old_frame_pyramid) - 1):
+                    r[j] *= 2.
+                    c[j] *= 2.
+
                 r[j] = int(np.around(r[j]))
                 c[j] = int(np.around(c[j]))
-                
-                if(i != len(old_frame_pyramid) - 1):
-                    r[j] *= 2
-                    c[j] *= 2
             except:
                 print "Unexpected error:", sys.exc_info()[0]
 
