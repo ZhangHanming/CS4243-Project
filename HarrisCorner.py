@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-def findCorners(frame, ksize = 13):
+def findCorners(frame, ksize = 13, kCorners = 200):
     x, y = frame.shape
 
     gx = np.zeros((x, y))
@@ -26,10 +26,10 @@ def findCorners(frame, ksize = 13):
             D, V = np.linalg.eig(Wi)
             eigMin[i][j] = D.min()
     
-    return selectCorners(eigMin, ksize)
+    return selectCorners(eigMin, ksize, kCorners)
 
 
-def selectCorners(eigMin, ksize):
+def selectCorners(eigMin, ksize, kCorners):
     c = []
     r = []
     rows = []
@@ -46,7 +46,7 @@ def selectCorners(eigMin, ksize):
     for i in range(len(r)):
         mins.append(eigMin[r[i]][c[i]])
 
-    ind = np.argpartition(mins, -200)[-200:]
+    ind = np.argpartition(mins, -kCorners)[-kCorners:]
     for i in ind:
         rows.append(r[i])
         cols.append(c[i])
