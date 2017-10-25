@@ -10,6 +10,7 @@ ret, old_frame = cap.read()
 old_frame_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
 # Find corners on the first frame
+
 r, c = findCorners(old_frame_gray, 11, 100)
 
 cv2.imshow('frame', markWithCircle(r, c, old_frame))
