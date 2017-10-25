@@ -30,14 +30,16 @@ def downsample(frame):
 
 def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 3):
     kernel = np.ones((ksize, ksize))
-    resize = lambda x : x / 2 ** (len(old_frame_pyramid) - 1)
-    r = map(resize, r)
-    c = map(resize, c)
+    resizeToMinLevel = lambda x : x / 2 ** (len(old_frame_pyramid) - 1)
+    r = map(resizeToMinLevel, r)
+    c = map(resizeToMinLevel, c)
 
+    upsample = lambda x : x * 2
+    d = [np.array([[0.],[0.]])]*len(r)
 
     # loop from the top of the pyramid
     for i in range(len(old_frame_pyramid)):        
-
+        d = map(upsample, d)
         I = old_frame_pyramid[i]
         J = new_frame_pyramid[i]
 
@@ -55,8 +57,6 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 3):
         Wxx = cv2.filter2D(Ixx, -1, kernel)
         Wxy = cv2.filter2D(Ixy, -1, kernel)
         Wyy = cv2.filter2D(Iyy, -1, kernel)
-        Gx = cv2.filter2D(gx*(I-J), -1, kernel)
-        Gy = cv2.filter2D(gy*(I-J), -1, kernel)
 
         j = 0
         while(j < len(r)):
@@ -64,28 +64,36 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 3):
             if(r[j] > x or c[j] > y):
                 del r[j]
                 del c[j]
+                del d[j]
                 j = j-1
                 continue
 
+        
             try:
-                Z = np.array([[Wxx[r[j]][c[j]], Wxy[r[j]][c[j]]], [Wxy[r[j]][c[j]], Wyy[r[j]][c[j]]]])
-                b = np.array([[Gx[r[j]][c[j]]], [Gy[r[j]][c[j]]]])
+                row = r[j]
+                col = c[j]
 
-                d = np.dot(np.linalg.inv(Z), b)
+                translateM = np.float32([[1,0,-d[j][0,0]],[0,1,-d[j][1,0]]])
+                translatedJ = cv2.warpAffine(J, translateM, (J.shape[1], J.shape[0]))
 
-                r[j] += d[0,0]
-                c[j] += d[1,0]
+                Gx = cv2.filter2D((I-translatedJ)*gx, -1, kernel)
+                Gy = cv2.filter2D((I-translatedJ)*gy, -1, kernel)
 
+                Z = np.array([[Wxx[row][col], Wxy[row][col]], [Wxy[row][col], Wyy[row][col]]])
+                b = np.array([[Gx[row][col]], [Gy[row][col]]])
+
+                d[j] += np.dot(np.linalg.inv(Z), b)
+                
                 if(i != len(old_frame_pyramid) - 1):
-                    r[j] *= 2.
-                    c[j] *= 2.
-
-                r[j] = int(np.around(r[j]))
-                c[j] = int(np.around(c[j]))
-            except:
-                print "Unexpected error:", sys.exc_info()[0]
+                    r[j] *= 2
+                    c[j] *= 2
+            except Exception as e:
+                print(e)
 
             j = j + 1
+
+    r = np.add(r, map(lambda x : int(x[0,0]), d))
+    c = np.add(c, map(lambda x : int(x[1,0]), d))
     return r, c
 
 
