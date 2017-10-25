@@ -1,19 +1,20 @@
 import numpy as np
 import cv2
 
-def findCorners(frame, ksize = 13, kCorners = 200):
-    x, y = frame.shape
 
-    gx = np.zeros((x, y))
-    gy = np.zeros((x, y))
-    gx[:,0:y-1] = frame[:,1:y] - frame[:,0:y-1]
-    gy[0:x-1,:] = frame[1:x,:] - frame[0:x-1,:]
-
+def findCorners(frame, ksize=13, kCorners=200):
+    height, width = frame.shape
+    gy, gx = np.gradient(frame)
+    #gx = np.zeros((x, y))
+    #gy = np.zeros((x, y))
+    #gx[:, 0:y - 1] = frame[:, 1:y] - frame[:, 0:y - 1]
+    #gy[0:x - 1, :] = frame[1:x, :] - frame[0:x - 1, :]
     Ixx = gx * gx
     Ixy = gx * gy
     Iyy = gy * gy
 
-    kernel = np.ones((ksize,ksize))
+    #kernel = np.ones((ksize,ksize))
+    kernel = getGaussKernels(ksize)
     Wxx = cv2.filter2D(Ixx, -1, kernel)
     Wxy = cv2.filter2D(Ixy, -1, kernel)
     Wyy = cv2.filter2D(Iyy, -1, kernel)
@@ -25,7 +26,7 @@ def findCorners(frame, ksize = 13, kCorners = 200):
             Wi = np.array([[Wxx[i][j], Wxy[i][j]], [Wxy[i][j], Wyy[i][j]]])
             D, V = np.linalg.eig(Wi)
             eigMin[i][j] = D.min()
-    
+
     return selectCorners(eigMin, ksize, kCorners)
 
 
@@ -34,11 +35,12 @@ def selectCorners(eigMin, ksize, kCorners):
     r = []
     rows = []
     cols = []
-    for i in range(0,eigMin.shape[0]-ksize,13):
-        for j in range(0,eigMin.shape[1]-ksize,13):
-            m = eigMin[i:i+ksize, j:j+ksize]
-            row = np.argmax(np.max(m, axis=0))+i
-            col = np.argmax(np.max(m, axis=1))+j
+    for i in range(0, eigMin.shape[0] - ksize, ksize):
+        for j in range(0, eigMin.shape[1] - ksize, ksize):
+            m = eigMin[i:i + ksize, j:j + ksize]
+            index = np.argmax(m)
+            row = int(index / ksize) + i
+            col = int(index % ksize) + j
             r.append(row)
             c.append(col)
 
@@ -54,5 +56,9 @@ def selectCorners(eigMin, ksize, kCorners):
     return rows, cols
 
 
-
-
+def getGaussKernels(k, sigma=1.0):
+    # Generate a Gkernel with length k and sigma
+    ax = np.arange(-k // 2 + 1.0, k // 2 + 1.0)
+    xx, yy = np.meshgrid(ax, ax)
+    kernel = np.exp(-(xx**2 + yy**2) / (2. * sigma**2))
+    return kernel / np.sum(kernel)
