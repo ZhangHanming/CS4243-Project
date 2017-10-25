@@ -7,7 +7,7 @@ def trackFeatures(old_frame, new_frame, r, c):
     old_frame_pyramid = createPyramid(old_frame)
     new_frame_pyramid = createPyramid(new_frame)
 
-    return computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, 7)
+    return computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, 15)
 
 
 def createPyramid(frame, minSize = 32, maxLevel = 5):
@@ -65,7 +65,6 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 3):
                 del r[j]
                 del c[j]
                 del d[j]
-                j = j-1
                 continue
 
         

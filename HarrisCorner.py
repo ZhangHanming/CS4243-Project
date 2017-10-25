@@ -36,7 +36,7 @@ def selectCorners(eigMin, ksize, kCorners):
     cols = []
     for i in range(0,eigMin.shape[0]-ksize,13):
         for j in range(0,eigMin.shape[1]-ksize,13):
-            m = eigMin[i:i+ksize-1, j:j+ksize-1]
+            m = eigMin[i:i+ksize, j:j+ksize]
             row = np.argmax(np.max(m, axis=0))+i
             col = np.argmax(np.max(m, axis=1))+j
             r.append(row)
