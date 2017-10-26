@@ -3,12 +3,17 @@ import cv2
 
 
 def findCorners(frame, ksize=13, kCorners=200):
-    height, width = frame.shape
-    gy, gx = np.gradient(frame)
-    #gx = np.zeros((x, y))
-    #gy = np.zeros((x, y))
-    #gx[:, 0:y - 1] = frame[:, 1:y] - frame[:, 0:y - 1]
-    #gy[0:x - 1, :] = frame[1:x, :] - frame[0:x - 1, :]
+    x, y = frame.shape
+
+    #gx, gy = np.gradient(frame)
+
+    # gx = np.zeros((x, y))
+    # gy = np.zeros((x, y))
+    # gx[:, 0:y - 1] = frame[:, 1:y] - frame[:, 0:y - 1]
+    # gy[0:x - 1, :] = frame[1:x, :] - frame[0:x - 1, :]
+
+    gx = cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize = ksize)
+    gy = cv2.Sobel(frame, cv2.CV_64F, 0, 1, ksize = ksize)
     Ixx = gx * gx
     Ixy = gx * gy
     Iyy = gy * gy
@@ -19,25 +24,25 @@ def findCorners(frame, ksize=13, kCorners=200):
     Wxy = cv2.filter2D(Ixy, -1, kernel)
     Wyy = cv2.filter2D(Iyy, -1, kernel)
 
-    eigMin = np.zeros(Wxx.shape)
+    response = np.zeros(Wxx.shape)
 
-    for i in range(eigMin.shape[0]):
-        for j in range(eigMin.shape[1]):
+    for i in range(response.shape[0]):
+        for j in range(response.shape[1]):
             Wi = np.array([[Wxx[i][j], Wxy[i][j]], [Wxy[i][j], Wyy[i][j]]])
             # D, V = np.linalg.eig(Wi)
-            eigMin[i][j] = np.linalg.det(Wi)-0.04*np.trace(Wi)**2
+            response[i][j] = np.linalg.det(Wi)-0.06*np.trace(Wi)**2
 
-    return selectCorners(eigMin, ksize, kCorners)
+    return selectCorners(response, ksize, kCorners)
 
 
-def selectCorners(eigMin, ksize, kCorners):
+def selectCorners(response, ksize, kCorners):
     c = []
     r = []
     rows = []
     cols = []
-    for i in range(0, eigMin.shape[0] - ksize, ksize):
-        for j in range(0, eigMin.shape[1] - ksize, ksize):
-            m = eigMin[i:i + ksize, j:j + ksize]
+    for i in range(0, response.shape[0] - ksize, ksize):
+        for j in range(0, response.shape[1] - ksize, ksize):
+            m = response[i:i + ksize, j:j + ksize]
             index = np.argmax(m)
             row = int(index / ksize) + i
             col = int(index % ksize) + j
@@ -46,7 +51,7 @@ def selectCorners(eigMin, ksize, kCorners):
 
     mins = []
     for i in range(len(r)):
-        mins.append(eigMin[r[i]][c[i]])
+        mins.append(response[r[i]][c[i]])
 
     ind = np.argpartition(mins, -kCorners)[-kCorners:]
     for i in ind:
