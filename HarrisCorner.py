@@ -24,8 +24,8 @@ def findCorners(frame, ksize=13, kCorners=200):
     for i in range(eigMin.shape[0]):
         for j in range(eigMin.shape[1]):
             Wi = np.array([[Wxx[i][j], Wxy[i][j]], [Wxy[i][j], Wyy[i][j]]])
-            D, V = np.linalg.eig(Wi)
-            eigMin[i][j] = D.min()
+            # D, V = np.linalg.eig(Wi)
+            eigMin[i][j] = np.linalg.det(Wi)-0.04*np.trace(Wi)**2
 
     return selectCorners(eigMin, ksize, kCorners)
 
