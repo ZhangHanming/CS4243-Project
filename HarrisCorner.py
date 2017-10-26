@@ -14,12 +14,13 @@ def findCorners(frame, ksize=13, kCorners=200):
 
     gx = cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize = ksize)
     gy = cv2.Sobel(frame, cv2.CV_64F, 0, 1, ksize = ksize)
+
     Ixx = gx * gx
     Ixy = gx * gy
     Iyy = gy * gy
 
-    kernel = np.ones((ksize,ksize))
-    #kernel = getGaussKernels(ksize)
+    #kernel = np.ones((ksize,ksize))
+    kernel = getGaussKernels(ksize)
     Wxx = cv2.filter2D(Ixx, -1, kernel)
     Wxy = cv2.filter2D(Ixy, -1, kernel)
     Wyy = cv2.filter2D(Iyy, -1, kernel)
@@ -30,7 +31,7 @@ def findCorners(frame, ksize=13, kCorners=200):
         for j in range(response.shape[1]):
             Wi = np.array([[Wxx[i][j], Wxy[i][j]], [Wxy[i][j], Wyy[i][j]]])
             # D, V = np.linalg.eig(Wi)
-            response[i][j] = np.linalg.det(Wi)-0.06*np.trace(Wi)**2
+            response[i][j] = np.linalg.det(Wi)-0.04*np.trace(Wi)**2
 
     return selectCorners(response, ksize, kCorners)
 
@@ -49,11 +50,11 @@ def selectCorners(response, ksize, kCorners):
             r.append(row)
             c.append(col)
 
-    mins = []
+    localmax = []
     for i in range(len(r)):
-        mins.append(response[r[i]][c[i]])
+        localmax.append(response[r[i]][c[i]])
 
-    ind = np.argpartition(mins, -kCorners)[-kCorners:]
+    ind = np.argpartition(localmax, -kCorners)[-kCorners:]
     for i in ind:
         rows.append(r[i])
         cols.append(c[i])

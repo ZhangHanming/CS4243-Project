@@ -7,10 +7,10 @@ def trackFeatures(old_frame, new_frame, r, c):
     old_frame_pyramid = createPyramid(old_frame)
     new_frame_pyramid = createPyramid(new_frame)
 
-    return computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, 15)
+    return computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, 4)
 
 
-def createPyramid(frame, minSize = 32, maxLevel = 5):
+def createPyramid(frame, minSize = 128, maxLevel = 5):
     pyramid = [frame]
     while(frame.shape[0] > minSize and frame.shape[1] > minSize and len(pyramid)<maxLevel):
         sample = downsample(frame)
@@ -45,10 +45,15 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 3):
 
         x, y = I.shape
 
-        gx = np.zeros((x, y))
-        gy = np.zeros((x, y))
-        gx[:,0:y-1] = I[:,1:y] - I[:,0:y-1]
-        gy[0:x-1,:] = I[1:x,:] - I[0:x-1,:]
+        # gx = np.zeros((x, y))
+        # gy = np.zeros((x, y))
+        # gx[:,0:y-1] = I[:,1:y] - I[:,0:y-1]
+        # gy[0:x-1,:] = I[1:x,:] - I[0:x-1,:]
+
+        gx = cv2.Sobel(I, cv2.CV_64F, 1, 0, ksize = 5)
+        gy = cv2.Sobel(I, cv2.CV_64F, 0, 1, ksize = 5)
+
+        # gy, gx = np.gradient(I)
 
         Ixx = gx * gx
         Ixy = gx * gy
@@ -83,16 +88,18 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 3):
 
                 d[j] += np.dot(np.linalg.inv(Z), b)
                 
-                if(i != len(old_frame_pyramid) - 1):
-                    r[j] *= 2
-                    c[j] *= 2
+
             except Exception as e:
                 print(e)
 
             j = j + 1
 
-    r = np.add(r, map(lambda x : int(x[0,0]), d))
-    c = np.add(c, map(lambda x : int(x[1,0]), d))
+        if(i != len(old_frame_pyramid) - 1):
+            r = map(upsample, r)
+            c = map(upsample, c)
+
+    c = np.add(c, map(lambda x : int(x[0,0]), d))
+    r = np.add(r, map(lambda x : int(x[1,0]), d))
     return r, c
 
 
