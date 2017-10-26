@@ -13,8 +13,8 @@ def findCorners(frame, ksize=13, kCorners=200):
     Ixy = gx * gy
     Iyy = gy * gy
 
-    #kernel = np.ones((ksize,ksize))
-    kernel = getGaussKernels(ksize)
+    kernel = np.ones((ksize,ksize))
+    #kernel = getGaussKernels(ksize)
     Wxx = cv2.filter2D(Ixx, -1, kernel)
     Wxy = cv2.filter2D(Ixy, -1, kernel)
     Wyy = cv2.filter2D(Iyy, -1, kernel)
