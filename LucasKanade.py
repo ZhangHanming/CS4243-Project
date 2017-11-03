@@ -7,99 +7,122 @@ def trackFeatures(old_frame, new_frame, r, c):
     old_frame_pyramid = createPyramid(old_frame)
     new_frame_pyramid = createPyramid(new_frame)
 
-    return computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, 4)
+    return computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, 13)
 
 
-def createPyramid(frame, minSize = 128, maxLevel = 5):
+def createPyramid(frame, minSize = 64, maxLevel = 5):
+    frame = frame.astype(float)
     pyramid = [frame]
     while(frame.shape[0] > minSize and frame.shape[1] > minSize and len(pyramid)<maxLevel):
-        sample = downsample(frame)
+        sample = gaussianSubsample(frame)
         pyramid = [sample] + pyramid
         frame = sample
 
     return pyramid
 
-# downsample by averabng a neighborhood of 4 pixels
-def downsample(frame):
-    new_frame = np.zeros(map(lambda x: x/2, frame.shape))
-    for i in range(0,frame.shape[0],2):
-        for j in range(0,frame.shape[1],2):
-            new_frame[i/2][j/2] = frame[i:i+2,j:j+2].sum() / 4
+def scaleVector(v, length):
+    result = [v]
+    downsample = lambda x : x / 2
+    for i in range(length - 1):
+        scaled = map(downsample, v)
+        result = [scaled] + result
+        v = scaled
 
+    return result
+
+def gaussianSubsample(frame):
+    gaussian1D = cv2.getGaussianKernel(5, 1)
+    kernel = np.dot(gaussian1D, np.transpose(gaussian1D))
+
+    frame = cv2.filter2D(frame, -1, kernel)
+    new_frame = np.zeros(map(lambda x: x/2, frame.shape))
+    new_frame[:,:] = frame[0:frame.shape[0]:2, 0:frame.shape[1]:2]
     return new_frame
 
-def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 3):
+def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 17):
     kernel = np.ones((ksize, ksize))
-    resizeToMinLevel = lambda x : x / 2 ** (len(old_frame_pyramid) - 1)
-    r = map(resizeToMinLevel, r)
-    c = map(resizeToMinLevel, c)
+    # gaussian1D = cv2.getGaussianKernel(ksize, 1) * ksize
+    # kernel = np.dot(gaussian1D, np.transpose(gaussian1D))
+
+    scaledR = scaleVector(r, len(old_frame_pyramid))
+    scaledC = scaleVector(c, len(old_frame_pyramid))
 
     upsample = lambda x : x * 2
     d = [np.array([[0.],[0.]])]*len(r)
 
+
+
     # loop from the top of the pyramid
     for i in range(len(old_frame_pyramid)):        
         d = map(upsample, d)
+
         I = old_frame_pyramid[i]
         J = new_frame_pyramid[i]
 
         x, y = I.shape
+        
+        # gx = cv2.Sobel(I, cv2.CV_64F, 1, 0, ksize = 1) 
+        # gy = cv2.Sobel(I, cv2.CV_64F, 0, 1, ksize = 1) 
+
+
 
         # gx = np.zeros((x, y))
         # gy = np.zeros((x, y))
-        # gx[:,0:y-1] = I[:,1:y] - I[:,0:y-1]
-        # gy[0:x-1,:] = I[1:x,:] - I[0:x-1,:]
+        # gx[:, :-1] = I[:, 1:] - I[:, :-1]
+        # gy[:-1, :] = I[1:, :] - I[:-1, :]
 
-        gx = cv2.Sobel(I, cv2.CV_64F, 1, 0, ksize = 5)
-        gy = cv2.Sobel(I, cv2.CV_64F, 0, 1, ksize = 5)
-
-        # gy, gx = np.gradient(I)
+        gx = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.array([[-1,1],[-1,1]]))
+        gy = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.array([[-1,-1],[1,1]]))
 
         Ixx = gx * gx
         Ixy = gx * gy
         Iyy = gy * gy
 
-        Wxx = cv2.filter2D(Ixx, -1, kernel)
-        Wxy = cv2.filter2D(Ixy, -1, kernel)
-        Wyy = cv2.filter2D(Iyy, -1, kernel)
+        Wxx = cv2.filter2D(Ixx, cv2.CV_64F, kernel)
+        Wxy = cv2.filter2D(Ixy, cv2.CV_64F, kernel)
+        Wyy = cv2.filter2D(Iyy, cv2.CV_64F, kernel)
 
         j = 0
-        while(j < len(r)):
-            # discard out of frame corners
-            if(r[j] > x or c[j] > y):
-                del r[j]
-                del c[j]
-                del d[j]
-                continue
+        counter = 0
 
-        
+        while(j < len(scaledR[0])):        
             try:
-                row = r[j]
-                col = c[j]
+                row = scaledR[i][j]
+                col = scaledC[i][j]
 
                 translateM = np.float32([[1,0,-d[j][0,0]],[0,1,-d[j][1,0]]])
+                
+                # translateM = np.float32([[1,0,0.],[0,1,0.]])
                 translatedJ = cv2.warpAffine(J, translateM, (J.shape[1], J.shape[0]))
 
-                Gx = cv2.filter2D((I-translatedJ)*gx, -1, kernel)
-                Gy = cv2.filter2D((I-translatedJ)*gy, -1, kernel)
+                gt = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.ones((2,2))) + cv2.filter2D(translatedJ, cv2.CV_64F, -0.25 * np.ones((2,2)))
+                # gt = I - translatedJ
 
-                Z = np.array([[Wxx[row][col], Wxy[row][col]], [Wxy[row][col], Wyy[row][col]]])
-                b = np.array([[Gx[row][col]], [Gy[row][col]]])
 
-                d[j] += np.dot(np.linalg.inv(Z), b)
+                Gx = cv2.filter2D(gt*gx, cv2.CV_64F, kernel)
+                Gy = cv2.filter2D(gt*gy, cv2.CV_64F, kernel)
+
+                Z = np.array([[Wxx[row,col], Wxy[row,col]], [Wxy[row,col], Wyy[row,col]]])
+                b = np.array([[Gx[row,col]], [Gy[row,col]]])
+                    
+                movement = np.dot(np.linalg.inv(Z), b)         
                 
+                d[j] = d[j] + movement
+
+                if(np.linalg.norm(movement) < 1 or counter >= 10):
+                    j += 1
+                    counter = 0
+                else:
+                    counter += 1
 
             except Exception as e:
-                print(e)
+                j += 1
 
-            j = j + 1
-
-        if(i != len(old_frame_pyramid) - 1):
-            r = map(upsample, r)
-            c = map(upsample, c)
+    d = np.around(d)
 
     c = np.add(c, map(lambda x : int(x[0,0]), d))
     r = np.add(r, map(lambda x : int(x[1,0]), d))
-    return r, c
+
+    return r.tolist(), c.tolist()
 
 

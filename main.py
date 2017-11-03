@@ -1,14 +1,17 @@
 import numpy as np
 import cv2
+import platform
 from HarrisCorner import findCorners
 from Draw import markWithCircle
 from LucasKanade import trackFeatures
+
 
 # Video Reader
 cap = cv2.VideoCapture("Videos/traffic.mp4")
 
 # Video Writer
-fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+fourcc = cv2.VideoWriter_fourcc(*'I420')
+
 out = cv2.VideoWriter(
     'result.avi', 
     fourcc, 
