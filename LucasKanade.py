@@ -7,10 +7,10 @@ def trackFeatures(old_frame, new_frame, r, c):
     old_frame_pyramid = createPyramid(old_frame)
     new_frame_pyramid = createPyramid(new_frame)
 
-    return computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, 13)
+    return computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, 17)
 
 
-def createPyramid(frame, minSize = 64, maxLevel = 5):
+def createPyramid(frame, minSize = 16, maxLevel = 5):
     frame = frame.astype(float)
     pyramid = [frame]
     while(frame.shape[0] > minSize and frame.shape[1] > minSize and len(pyramid)<maxLevel):
@@ -36,13 +36,13 @@ def gaussianSubsample(frame):
 
     frame = cv2.filter2D(frame, -1, kernel)
     new_frame = np.zeros(map(lambda x: x/2, frame.shape))
-    new_frame[:,:] = frame[0:frame.shape[0]:2, 0:frame.shape[1]:2]
+    new_frame[:,:] = frame[0:frame.shape[0]-1:2, 0:frame.shape[1]-1:2]
     return new_frame
 
 def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 17):
-    kernel = np.ones((ksize, ksize))
-    # gaussian1D = cv2.getGaussianKernel(ksize, 1) * ksize
-    # kernel = np.dot(gaussian1D, np.transpose(gaussian1D))
+    # kernel = np.ones((ksize, ksize))
+    gaussian1D = cv2.getGaussianKernel(ksize, 1) * ksize
+    kernel = np.dot(gaussian1D, np.transpose(gaussian1D))
 
     scaledR = scaleVector(r, len(old_frame_pyramid))
     scaledC = scaleVector(c, len(old_frame_pyramid))
@@ -58,6 +58,9 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 17):
 
         I = old_frame_pyramid[i]
         J = new_frame_pyramid[i]
+
+        I = cv2.GaussianBlur(I, (3,3), 0)
+        J = cv2.GaussianBlur(J, (3,3), 0)
 
         x, y = I.shape
         
@@ -109,7 +112,7 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 17):
                 
                 d[j] = d[j] + movement
 
-                if(np.linalg.norm(movement) < 1 or counter >= 10):
+                if(np.linalg.norm(movement) == 0 or counter >= 10):
                     j += 1
                     counter = 0
                 else:
