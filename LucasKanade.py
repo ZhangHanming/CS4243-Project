@@ -59,21 +59,10 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 17):
         I = old_frame_pyramid[i]
         J = new_frame_pyramid[i]
 
-        I = cv2.GaussianBlur(I, (3,3), 0)
-        J = cv2.GaussianBlur(J, (3,3), 0)
-
-        x, y = I.shape
+        # Smoothen to remove noise but lose sharpness
+        I = cv2.GaussianBlur(I, (3,3), 1)
+        J = cv2.GaussianBlur(J, (3,3), 1)
         
-        # gx = cv2.Sobel(I, cv2.CV_64F, 1, 0, ksize = 1) 
-        # gy = cv2.Sobel(I, cv2.CV_64F, 0, 1, ksize = 1) 
-
-
-
-        # gx = np.zeros((x, y))
-        # gy = np.zeros((x, y))
-        # gx[:, :-1] = I[:, 1:] - I[:, :-1]
-        # gy[:-1, :] = I[1:, :] - I[:-1, :]
-
         gx = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.array([[-1,1],[-1,1]]))
         gy = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.array([[-1,-1],[1,1]]))
 
