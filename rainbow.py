@@ -33,7 +33,6 @@ def pasteImage(img, dest, pos):
     destWidth = float(dest.shape[1])
     degree = math.degrees(
         math.atan((destWidth / 2 - pos[0]) / (destHeight - pos[1])))
-    print degree
     imgHeight = img.shape[0]
     imgWidth = img.shape[1]
     imgDiagonal = int(math.sqrt(imgHeight**2 + imgWidth**2)) - 1
@@ -67,14 +66,11 @@ def pasteImage(img, dest, pos):
     b, g, r, a = cv2.split(rotatedImg)
     overlayRBG = cv2.merge((b, g, r))
     img2Gray = cv2.cvtColor(overlayRBG, cv2.COLOR_BGR2GRAY)
-    ret, mask = cv2.threshold(img2Gray, 0, 255, cv2.THRESH_BINARY)
+    ret, mask = cv2.threshold(img2Gray, 5, 255, cv2.THRESH_BINARY)
     maskInv = cv2.bitwise_not(mask)
-    maskAlpha = cv2.medianBlur(a, 3)
+    maskAlpha = cv2.bitwise_not(a)
     roi = dest[x1:x2, y1:y2]
-    print rotatedImg.shape
-    print roi.shape
-    print maskInv.shape
-    destNew = cv2.bitwise_and(roi.copy(), roi.copy(), mask=maskInv)
+    destNew = cv2.bitwise_and(roi.copy(), roi.copy(), mask=maskAlpha)
     overlay = cv2.bitwise_and(overlayRBG, overlayRBG, mask=mask)
     dest[x1:x2, y1:y2] = cv2.add(destNew, overlay)
     return dest
