@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import math
 
 
 def addEffect(cornerPos, videoPath, imagePath):
@@ -30,8 +31,11 @@ def pasteImage(img, dest, pos):
     """
     destHeight = dest.shape[0]
     destWidth = dest.shape[1]
+    degree = math.degrees(math.atan((destWidth / 2 - pos[0]) / pos[1]))
     imgHeight = img.shape[0]
     imgWidth = img.shape[1]
+    M = cv2.getRotationMatrix2D((imgWidth / 2, imgHeight / 2), degree, 1)
+    dst = cv2.warpAffine(img, M, (imgWidth, imgHeight))
     imgROIx1 = 0
     imgROIx2 = imgHeight
     imgROIy1 = 0
