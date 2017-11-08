@@ -29,21 +29,27 @@ def pasteImage(img, dest, pos):
     @pos coordinate of background to be pasted, align to the center of the source image
     @return the result image
     """
-    destHeight = dest.shape[0]
-    destWidth = dest.shape[1]
-    degree = math.degrees(math.atan((destWidth / 2 - pos[0]) / pos[1]))
+    destHeight = float(dest.shape[0])
+    destWidth = float(dest.shape[1])
+    degree = math.degrees(
+        math.atan((destWidth / 2 - pos[0]) / (destHeight - pos[1])))
+    print degree
     imgHeight = img.shape[0]
     imgWidth = img.shape[1]
+    imgDiagonal = int(math.sqrt(imgHeight**2 + imgWidth**2)) - 1
     M = cv2.getRotationMatrix2D((imgWidth / 2, imgHeight / 2), degree, 1)
-    dst = cv2.warpAffine(img, M, (imgWidth, imgHeight))
+    # Change the center of rotation matrix from cv2
+    M[0, 2] += int(imgDiagonal / 2 - imgWidth / 2)
+    M[1, 2] += int(imgDiagonal / 2 - imgHeight / 2)
+    rotatedImg = cv2.warpAffine(img, M, (imgDiagonal, imgDiagonal))
     imgROIx1 = 0
-    imgROIx2 = imgHeight
+    imgROIx2 = imgDiagonal
     imgROIy1 = 0
-    imgROIy2 = imgWidth
-    x1 = pos[0] - imgHeight / 2
-    x2 = pos[0] + imgHeight / 2
-    y1 = pos[1] - imgWidth / 2
-    y2 = pos[1] + imgWidth / 2
+    imgROIy2 = imgDiagonal
+    x1 = pos[0] - imgDiagonal / 2
+    x2 = pos[0] + imgDiagonal / 2
+    y1 = pos[1] - imgDiagonal / 2
+    y2 = pos[1] + imgDiagonal / 2
     # Handle corner cases
     if(x1 < 0):
         imgROIx1 = -x1
@@ -57,13 +63,18 @@ def pasteImage(img, dest, pos):
     if(y2 > destWidth):
         imgROIy2 = imgWidth - y2 + destWidth
         y2 = destWidth
-    img = img[imgROIx1:imgROIx2, imgROIy1:imgROIy2]
-    b, g, r, a = cv2.split(img)
+    rotatedImg = rotatedImg[imgROIx1:imgROIx2, imgROIy1:imgROIy2]
+    b, g, r, a = cv2.split(rotatedImg)
     overlayRBG = cv2.merge((b, g, r))
-    mask = cv2.medianBlur(a, 3)
+    img2Gray = cv2.cvtColor(overlayRBG, cv2.COLOR_BGR2GRAY)
+    ret, mask = cv2.threshold(img2Gray, 0, 255, cv2.THRESH_BINARY)
+    maskInv = cv2.bitwise_not(mask)
+    maskAlpha = cv2.medianBlur(a, 3)
     roi = dest[x1:x2, y1:y2]
-    destNew = cv2.bitwise_and(roi.copy(), roi.copy(),
-                              mask=cv2.bitwise_not(mask))
+    print rotatedImg.shape
+    print roi.shape
+    print maskInv.shape
+    destNew = cv2.bitwise_and(roi.copy(), roi.copy(), mask=maskInv)
     overlay = cv2.bitwise_and(overlayRBG, overlayRBG, mask=mask)
     dest[x1:x2, y1:y2] = cv2.add(destNew, overlay)
     return dest
