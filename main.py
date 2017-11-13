@@ -13,20 +13,24 @@ cap = cv2.VideoCapture("Videos/mouse.mp4")
 fourcc = cv2.VideoWriter_fourcc(*'IYUV')
 
 out = cv2.VideoWriter(
-    'result.avi', 
-    fourcc, 
+    'result.avi',
+    fourcc,
     cap.get(cv2.CAP_PROP_FPS),
-    (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+    (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+     int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 )
 
 ret, old_frame = cap.read()
 old_frame_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
+corner_num = 1
+frame_num = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+row_list = np.zeros((corner_num, frame_num + 1))
+col_list = np.zeros((corner_num, frame_num + 1))
 # Find corners on the first frame
-
-r, c = findCorners(old_frame_gray, 11, 1)
-
-cv2.imshow('frame', markWithCircle(r, c, old_frame))
+r, c = findCorners(old_frame_gray, 11, corner_num)
+row_list[:, int(cap.get(cv2.CAP_PROP_POS_FRAMES))] = r
+col_list[:, int(cap.get(cv2.CAP_PROP_POS_FRAMES))] = c
 
 
 while(1):
@@ -39,6 +43,8 @@ while(1):
     new_frame_gray = cv2.cvtColor(new_frame, cv2.COLOR_BGR2GRAY)
 
     r, c = trackFeatures(old_frame_gray, new_frame_gray, r, c)
+    row_list[:, int(cap.get(cv2.CAP_PROP_POS_FRAMES))] = r
+    col_list[:, int(cap.get(cv2.CAP_PROP_POS_FRAMES))] = c
     #cv2.imshow('frame', markWithCircle(r, c, new_frame))
 
     out.write(markWithCircle(r, c, new_frame))
@@ -51,7 +57,8 @@ while(1):
     old_frame = new_frame
     old_frame_gray = new_frame_gray
 
-
+np.savetxt("rows.csv", row_list, delimiter=",")
+np.savetxt("cols.csv", row_list, delimiter=",")
 
 cv2.destroyAllWindows()
 out.release()
