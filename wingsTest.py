@@ -1,6 +1,7 @@
 from addImage import addImage
 import cv2
 import numpy as np
+from HarrisCorner import findCorners
 
 cap = cv2.VideoCapture('Videos/arm.mp4')
 imagePath = "feather.jpg"
@@ -25,7 +26,11 @@ lk_params = dict(winSize=(13, 13),
 # Take first frame and find corners in it
 ret, old_frame = cap.read()
 old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
-p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, **feature_params)
+r, c = findCorners(old_gray, 13, 1000)
+p0 = np.zeros((1000,1,2),dtype=np.float32)
+for i in range(1000):
+    p0[i] = np.array([r[i],c[i]],dtype=np.float32)
+#p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, **feature_params)
 # Create a mask image for drawing purposes
 mask = np.zeros_like(old_frame)
 
