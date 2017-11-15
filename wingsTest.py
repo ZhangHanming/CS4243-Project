@@ -26,9 +26,9 @@ lk_params = dict(winSize=(13, 13),
 # Take first frame and find corners in it
 ret, old_frame = cap.read()
 old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
-r, c = findCorners(old_gray, 13, 1000)
-p0 = np.zeros((1000,1,2),dtype=np.float32)
-for i in range(1000):
+r, c = findCorners(old_gray, 13, 1500)
+p0 = np.zeros((1500,1,2),dtype=np.float32)
+for i in range(1500):
     p0[i] = np.array([r[i],c[i]],dtype=np.float32)
 #p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, **feature_params)
 # Create a mask image for drawing purposes
@@ -47,14 +47,16 @@ while(1):
     good_old = p0[st == 1]
     # draw the tracks
     for i, (new, old) in enumerate(zip(good_new, good_old)):
+        random_grey_scale = np.random.uniform(0.5,1.0)
+        new_image = (image * random_grey_scale).astype(np.uint8)
         a, b = new.ravel()
         c, d = old.ravel()
         distance = np.sqrt((a - c)**2 + (b - d)**2)
-        if(distance > 5):
-            scale = distance / 10.0 if distance / 10.0 < 2 else 2.0
+        if(distance > 5 and distance < 20):
+            scale = distance / 5.0
             angle = np.rad2deg(np.arctan2(a - c, b - d))
             frame = addImage(b, a, angle + 180, scale,
-                             int(300 * scale), image, frame)
+                             int(300 * scale), new_image, frame)
     img = frame
     cv2.imshow('frame', img)
     out.write(frame)
