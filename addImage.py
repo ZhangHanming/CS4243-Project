@@ -45,7 +45,7 @@ def addImage(row, col, angle, scale, size, img, bg):
 
     img_ROI = rotated_img[img_ROI_row1:img_ROI_row2, img_ROI_col1:img_ROI_col2]
     img2Gray = cv2.cvtColor(img_ROI, cv2.COLOR_BGR2GRAY)
-    ret, mask = cv2.threshold(img2Gray, 50, 255, cv2.THRESH_BINARY)
+    ret, mask = cv2.threshold(img2Gray, 60, 255, cv2.THRESH_BINARY)
     mask_inv = cv2.bitwise_not(mask)
     img_ROI = cv2.bitwise_and(img_ROI, img_ROI, mask=mask)
     bg_ROI = bg[bg_ROI_row1:bg_ROI_row2, bg_ROI_col1:bg_ROI_col2]
