@@ -63,7 +63,6 @@ while(1):
     # k = cv2.waitKey(30) & 0xff
     # if k == 27:
     #     break
-    print int(cap.get(cv2.CAP_PROP_POS_FRAMES))
 
     old_frame = new_frame
     old_frame_gray = new_frame_gray

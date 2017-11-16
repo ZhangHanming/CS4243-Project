@@ -1,7 +1,4 @@
 # Python Compiled Bytecode
 *.pyc
-*.jpg
 *.txt
-*.png
 *.ipynb
-*.avi

@@ -4,7 +4,7 @@ import math
 from addImage import addImage
 
 vPath = "Videos/sx.mp4"
-imagePath = "feather.jpg"
+imagePath = "Images/feather.jpg"
 cols = np.loadtxt("cols.csv", delimiter=",")
 rows = np.loadtxt("rows.csv", delimiter=",")
 
@@ -17,7 +17,7 @@ width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 fps = cap.get(cv2.CAP_PROP_FPS)
 fourcc = cv2.VideoWriter_fourcc(*'IYUV')
-out = cv2.VideoWriter('output.avi', fourcc, fps, (width, height))
+out = cv2.VideoWriter('Videos/wing.avi', fourcc, fps, (width, height))
 
 image = cv2.imread(imagePath, 1)
 rotate_mat_size = int(image.shape[0] * 2)

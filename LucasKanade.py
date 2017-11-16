@@ -69,17 +69,10 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 17):
         gx[:, 0:y - 1] = I[:, 1:y] - I[:, 0:y - 1]
         gy[0:x - 1, :] = I[1:x, :] - I[0:x - 1, :]
 
-        # gx = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.array([[-1,1],[-1,1]]))
-        # gy = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.array([[-1,-1],[1,1]]))
-
 
         Ixx = gx * gx
         Ixy = gx * gy
         Iyy = gy * gy
-
-        # Wxx = cv2.filter2D(Ixx, cv2.CV_64F, kernel)
-        # Wxy = cv2.filter2D(Ixy, cv2.CV_64F, kernel)
-        # Wyy = cv2.filter2D(Iyy, cv2.CV_64F, kernel)
 
         j = 0
         counter = 0
@@ -89,11 +82,6 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 17):
                 row = scaledR[i][j]
                 col = scaledC[i][j]
 
-                # translateM = np.float32([[1,0,-d[j][0,0]],[0,1,-d[j][1,0]]])
-                # translatedJ = cv2.warpAffine(J, translateM, (J.shape[1], J.shape[0]))
-
-                # gt = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.ones((2,2))) + cv2.filter2D(translatedJ, cv2.CV_64F, -0.25 * np.ones((2,2)))
-                # gt = I - translatedJ
                 
                 halfKSize = int(ksize / 2)
                 dint = np.around(d).astype(int)
@@ -107,11 +95,6 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 17):
                 gxgy = (Ixy[row-halfKSize:row+halfKSize+1,col-halfKSize:col+halfKSize+1]).sum()
                 gygy = (Iyy[row-halfKSize:row+halfKSize+1,col-halfKSize:col+halfKSize+1]).sum()
 
-                # Gx = cv2.filter2D(gt*gx, cv2.CV_64F, kernel)
-                # Gy = cv2.filter2D(gt*gy, cv2.CV_64F, kernel)
-
-                # Z = np.array([[Wxx[row,col], Wxy[row,col]], [Wxy[row,col], Wyy[row,col]]])
-                # b = np.array([[Gx[row,col]], [Gy[row,col]]])
                 Z = np.array([[gxgx, gxgy], [gxgy, gygy]])
                 b = np.array([[gtgx], [gtgy]])
                     
