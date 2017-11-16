@@ -35,7 +35,7 @@ while(1):
         if(r1 < 0 or r2 < 0 or c1 < 0 or c2 < 0):
             continue
         distance = np.sqrt((r2 - r1)**2 + (c2 - c1)**2)
-        if(distance > 0 and distance < 100):
+        if(distance > 2.5 and distance < 15):
             random_grey_scale = np.random.uniform(0.5,1.0)
             new_image = (image * random_grey_scale).astype(np.uint8)
             angle = np.rad2deg(np.arctan2(c2 - c1, r2 - r1)) + 180

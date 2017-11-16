@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from HarrisCorner import findCorners
 
-cap = cv2.VideoCapture('Videos/arm.mp4')
+cap = cv2.VideoCapture('Videos/nre.mp4')
 imagePath = "feather.jpg"
 image = cv2.imread(imagePath, 1)
 fourcc = cv2.VideoWriter_fourcc(*'IYUV')
@@ -21,9 +21,10 @@ lk_params = dict(winSize=(13, 13),
 # Take first frame and find corners in it
 ret, old_frame = cap.read()
 old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
-r, c = findCorners(old_gray, 13, 1500)
-p0 = np.zeros((1500,1,2),dtype=np.float32)
-for i in range(1500):
+n_corenrs = 180
+r, c = findCorners(old_gray, 13, n_corenrs)
+p0 = np.zeros((n_corenrs,1,2),dtype=np.float32)
+for i in range(n_corenrs):
     p0[i] = np.array([c[i],r[i]],dtype=np.float32)
 
 while(1):
@@ -45,7 +46,7 @@ while(1):
         a, b = new.ravel()
         c, d = old.ravel()
         distance = np.sqrt((a - c)**2 + (b - d)**2)
-        if(distance > 3 and distance < 20):
+        if(distance > 2.5 and distance < 15):
             scale = distance / 5.0
             angle = np.rad2deg(np.arctan2(a - c, b - d)) + 180
             frame = addImage(b, a, angle, scale,
