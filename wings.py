@@ -31,10 +31,10 @@ while(1):
         r2 = rows[i, frame_number]
         c1 = cols[i, frame_number-1]
         c2 = cols[i, frame_number]
-        if(r1 < 0 or r2 < 0 or c1 < 0 or c2 < 0):
+        if((c2 > 250 and c2 < 380) or (c1 > 250 and c2 < 380) or r1 > 340 or r2 > 340):
             continue
         distance = np.sqrt((r2 - r1)**2 + (c2 - c1)**2)
-        if(distance > 2.5 and distance < 15):
+        if(distance > 1.5 and distance < 13):
             random_grey_scale = np.random.uniform(0.5,1.0)
             new_image = (image * random_grey_scale).astype(np.uint8)
             angle = np.rad2deg(np.arctan2(c2 - c1, r2 - r1)) + 180
