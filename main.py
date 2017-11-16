@@ -13,7 +13,7 @@ cap = cv2.VideoCapture("Videos/sx.mp4")
 fourcc = cv2.VideoWriter_fourcc(*'IYUV')
 
 out = cv2.VideoWriter(
-    'result.avi',
+    'Videos/track.avi',
     fourcc,
     cap.get(cv2.CAP_PROP_FPS),
     (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
