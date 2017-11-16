@@ -10,7 +10,7 @@ def trackFeatures(old_frame, new_frame, r, c):
     return computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, 17)
 
 
-def createPyramid(frame, minSize = 16, maxLevel = 5):
+def createPyramid(frame, minSize = 64, maxLevel = 5):
     frame = frame.astype(float)
     pyramid = [frame]
     while(frame.shape[0] > minSize and frame.shape[1] > minSize and len(pyramid)<maxLevel):
@@ -41,7 +41,7 @@ def gaussianSubsample(frame):
 
 def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 17):
     # kernel = np.ones((ksize, ksize))
-    gaussian1D = cv2.getGaussianKernel(ksize, 1) * ksize
+    gaussian1D = cv2.getGaussianKernel(ksize, 1)
     kernel = np.dot(gaussian1D, np.transpose(gaussian1D))
 
     scaledR = scaleVector(r, len(old_frame_pyramid))
@@ -56,23 +56,30 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 17):
     for i in range(len(old_frame_pyramid)):        
         d = map(upsample, d)
 
-        I = old_frame_pyramid[i]
-        J = new_frame_pyramid[i]
+        I = old_frame_pyramid[i].astype(float)
+        J = new_frame_pyramid[i].astype(float)
 
         # Smoothen to remove noise but lose sharpness
         I = cv2.GaussianBlur(I, (3,3), 1)
         J = cv2.GaussianBlur(J, (3,3), 1)
-        
-        gx = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.array([[-1,1],[-1,1]]))
-        gy = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.array([[-1,-1],[1,1]]))
+
+        x, y = I.shape
+        gx = np.zeros((x, y))
+        gy = np.zeros((x, y))
+        gx[:, 0:y - 1] = I[:, 1:y] - I[:, 0:y - 1]
+        gy[0:x - 1, :] = I[1:x, :] - I[0:x - 1, :]
+
+        # gx = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.array([[-1,1],[-1,1]]))
+        # gy = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.array([[-1,-1],[1,1]]))
+
 
         Ixx = gx * gx
         Ixy = gx * gy
         Iyy = gy * gy
 
-        Wxx = cv2.filter2D(Ixx, cv2.CV_64F, kernel)
-        Wxy = cv2.filter2D(Ixy, cv2.CV_64F, kernel)
-        Wyy = cv2.filter2D(Iyy, cv2.CV_64F, kernel)
+        # Wxx = cv2.filter2D(Ixx, cv2.CV_64F, kernel)
+        # Wxy = cv2.filter2D(Ixy, cv2.CV_64F, kernel)
+        # Wyy = cv2.filter2D(Iyy, cv2.CV_64F, kernel)
 
         j = 0
         counter = 0
@@ -82,20 +89,31 @@ def computeOpticalFlow(old_frame_pyramid, new_frame_pyramid, r, c, ksize = 17):
                 row = scaledR[i][j]
                 col = scaledC[i][j]
 
-                translateM = np.float32([[1,0,-d[j][0,0]],[0,1,-d[j][1,0]]])
-                
-                # translateM = np.float32([[1,0,0.],[0,1,0.]])
-                translatedJ = cv2.warpAffine(J, translateM, (J.shape[1], J.shape[0]))
+                # translateM = np.float32([[1,0,-d[j][0,0]],[0,1,-d[j][1,0]]])
+                # translatedJ = cv2.warpAffine(J, translateM, (J.shape[1], J.shape[0]))
 
-                gt = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.ones((2,2))) + cv2.filter2D(translatedJ, cv2.CV_64F, -0.25 * np.ones((2,2)))
+                # gt = cv2.filter2D(I, cv2.CV_64F, 0.25 * np.ones((2,2))) + cv2.filter2D(translatedJ, cv2.CV_64F, -0.25 * np.ones((2,2)))
                 # gt = I - translatedJ
+                
+                halfKSize = int(ksize / 2)
+                dint = np.around(d).astype(int)
+                Jrow = row + dint[j][1,0]
+                Jcol = col + dint[j][0,0]
+                gt = I[row-halfKSize:row+halfKSize+1,col-halfKSize:col+halfKSize+1] - J[Jrow-halfKSize:Jrow+halfKSize+1,Jcol-halfKSize:Jcol+halfKSize+1]
 
+                gtgx = (gt*gx[row-halfKSize:row+halfKSize+1,col-halfKSize:col+halfKSize+1]).sum()
+                gtgy = (gt*gy[row-halfKSize:row+halfKSize+1,col-halfKSize:col+halfKSize+1]).sum()
+                gxgx = (Ixx[row-halfKSize:row+halfKSize+1,col-halfKSize:col+halfKSize+1]).sum()
+                gxgy = (Ixy[row-halfKSize:row+halfKSize+1,col-halfKSize:col+halfKSize+1]).sum()
+                gygy = (Iyy[row-halfKSize:row+halfKSize+1,col-halfKSize:col+halfKSize+1]).sum()
 
-                Gx = cv2.filter2D(gt*gx, cv2.CV_64F, kernel)
-                Gy = cv2.filter2D(gt*gy, cv2.CV_64F, kernel)
+                # Gx = cv2.filter2D(gt*gx, cv2.CV_64F, kernel)
+                # Gy = cv2.filter2D(gt*gy, cv2.CV_64F, kernel)
 
-                Z = np.array([[Wxx[row,col], Wxy[row,col]], [Wxy[row,col], Wyy[row,col]]])
-                b = np.array([[Gx[row,col]], [Gy[row,col]]])
+                # Z = np.array([[Wxx[row,col], Wxy[row,col]], [Wxy[row,col], Wyy[row,col]]])
+                # b = np.array([[Gx[row,col]], [Gy[row,col]]])
+                Z = np.array([[gxgx, gxgy], [gxgy, gygy]])
+                b = np.array([[gtgx], [gtgy]])
                     
                 movement = np.dot(np.linalg.inv(Z), b)         
                 

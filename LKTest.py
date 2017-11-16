@@ -5,12 +5,12 @@ from HarrisCorner import findCorners
 from Draw import markWithCircle
 from LucasKanade import trackFeatures
 
-img = cv2.imread('Images/first.jpg')
+img = cv2.imread('Images/checkboard.png')
 old_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(float)
 
 r, c = findCorners(old_gray, kCorners=50)
 
-new_img = cv2.imread('Images/second.jpg')
+new_img = cv2.imread('Images/new.png')
 new_gray = cv2.cvtColor(new_img, cv2.COLOR_BGR2GRAY).astype(float)
 
 

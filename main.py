@@ -7,7 +7,7 @@ from LucasKanade import trackFeatures
 
 
 # Video Reader
-cap = cv2.VideoCapture("Videos/arm.mp4")
+cap = cv2.VideoCapture("Videos/sx.mp4")
 
 # Video Writer
 fourcc = cv2.VideoWriter_fourcc(*'IYUV')
@@ -24,10 +24,11 @@ ret, old_frame = cap.read()
 frame_num = int(cap.get(cv2.CAP_PROP_POS_FRAMES)) - 1
 old_frame_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
-corner_num = 50
+corner_num = 180
 frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 row_list = np.zeros((corner_num, frame_count))
 col_list = np.zeros((corner_num, frame_count))
+
 # Find corners on the first frame
 r, c = findCorners(old_frame_gray, 13, corner_num)
 row_list[:, frame_num] = r
@@ -45,16 +46,16 @@ while(1):
     if(not ret):
         print "no frame to read"
         break
-    frame_num = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1
+
     new_frame_gray = cv2.cvtColor(new_frame, cv2.COLOR_BGR2GRAY)
 
     r_new, c_new = trackFeatures(old_frame_gray, new_frame_gray, r, c)
-    row_list[:, int(cap.get(cv2.CAP_PROP_POS_FRAMES))] = r_new
-    col_list[:, int(cap.get(cv2.CAP_PROP_POS_FRAMES))] = c_new
+    row_list[:, int(cap.get(cv2.CAP_PROP_POS_FRAMES)) - 1] = r_new
+    col_list[:, int(cap.get(cv2.CAP_PROP_POS_FRAMES)) - 1] = c_new
     #cv2.imshow('frame', markWithCircle(r, c, new_frame))
     for i in range(len(r)):
-        mask = cv2.line(mask, (c_new[i],r_new[i]),(c[i],r[i]),color[i].tolist(),2)
-        new_frame = cv2.circle(new_frame, (c_new[i],r_new[i]), 5, color[i].tolist(), -1)
+        mask = cv2.line(mask, (c_new[i],r_new[i]),(c[i],r[i]),color[i%100].tolist(),2)
+        new_frame = cv2.circle(new_frame, (c_new[i],r_new[i]), 5, color[i%100].tolist(), -1)
     img = cv2.add(new_frame, mask)
     out.write(img)
 
@@ -62,6 +63,7 @@ while(1):
     # k = cv2.waitKey(30) & 0xff
     # if k == 27:
     #     break
+    print int(cap.get(cv2.CAP_PROP_POS_FRAMES))
 
     old_frame = new_frame
     old_frame_gray = new_frame_gray

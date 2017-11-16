@@ -3,7 +3,7 @@ import cv2
 import math
 from addImage import addImage
 
-vPath = "Videos/arm.mp4"
+vPath = "Videos/sx.mp4"
 imagePath = "feather.jpg"
 cols = np.loadtxt("cols.csv", delimiter=",")
 rows = np.loadtxt("rows.csv", delimiter=",")
@@ -28,10 +28,10 @@ while(1):
         break
     frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
     for i in range(1, corner_number):
-        r1 = rows[i - 1, frame_number]
-        r2 = rows[i, frame_number]
-        c1 = cols[i - 1, frame_number]
-        c2 = cols[i, frame_number]
+        r1 = rows[i - 1, frame_number-1]
+        r2 = rows[i, frame_number-1]
+        c1 = cols[i - 1, frame_number-1]
+        c2 = cols[i, frame_number-1]
         if(r1 < 0 or r2 < 0 or c1 < 0 or c2 < 0):
             continue
         distance = np.sqrt((r2 - r1)**2 + (c2 - c1)**2)
