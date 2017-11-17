@@ -19,3 +19,10 @@ To create special effect video:
 3. run `python wings.py`
 4. the result video is at 'Videos/wing.avi' 
 
+Files:
+1. HarrisCorner.py - Funtion to find corners
+2. LucasKanade.py - Lucas Kanade tracker
+3. addImage.py - Funtion to paste one imgae on another
+4. main.py - script to track corners of a video and save the coordinates as `cols.csv` and `rows.csv`
+5. wings.py - script to add wings to a video
+6. cv2.pyd - cv2 lib file
